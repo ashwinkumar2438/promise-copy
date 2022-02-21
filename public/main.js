@@ -18,14 +18,14 @@ var State;
     State["rejected"] = "REJECTED";
 })(State || (State = {}));
 class PromiseCopy {
-    constructor(callback) {
+    constructor(executer) {
         _PromiseCopy_instances.add(this);
         _PromiseCopy_state.set(this, State.pending);
         _PromiseCopy_result.set(this, undefined);
         _PromiseCopy_handlers.set(this, []);
         _PromiseCopy_timeoutId.set(this, null);
         try {
-            callback(PromiseCopy.resolve.bind(this), PromiseCopy.reject.bind(this));
+            executer(PromiseCopy.resolve.bind(this), PromiseCopy.reject.bind(this));
         }
         catch (e) {
             PromiseCopy.reject.call(this, e);
@@ -40,6 +40,8 @@ class PromiseCopy {
     static resolve(value) {
         if (!(this instanceof PromiseCopy))
             return new PromiseCopy(res => res(value));
+        if (__classPrivateFieldGet(this, _PromiseCopy_state, "f") !== State.pending)
+            return;
         if (isThenable(value))
             return value.then(PromiseCopy.resolve.bind(this), PromiseCopy.reject.bind(this));
         __classPrivateFieldSet(this, _PromiseCopy_state, State.fulfilled, "f");
@@ -50,6 +52,8 @@ class PromiseCopy {
     static reject(value) {
         if (!(this instanceof PromiseCopy))
             return new PromiseCopy((_, rej) => rej(value));
+        if (__classPrivateFieldGet(this, _PromiseCopy_state, "f") !== State.pending)
+            return;
         __classPrivateFieldSet(this, _PromiseCopy_state, State.rejected, "f");
         __classPrivateFieldSet(this, _PromiseCopy_result, value, "f");
         this.rejected = value;
@@ -115,4 +119,4 @@ _PromiseCopy_state = new WeakMap(), _PromiseCopy_result = new WeakMap(), _Promis
     }), "f");
 };
 window.PromiseCopy = PromiseCopy;
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=main.js.map

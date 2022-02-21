@@ -72,6 +72,8 @@ class PromiseCopy{
 
         if( !( this instanceof PromiseCopy ) )return new PromiseCopy( res => res( value ) );
 
+        if( this.#state !== State.pending )return ; //return if promise settled.
+
         if( isThenable( value ) )return value.then( PromiseCopy.resolve.bind( this ), PromiseCopy.reject.bind( this ) );
         
         this.#state = State.fulfilled ;
@@ -85,6 +87,8 @@ class PromiseCopy{
     static reject( value?: unknown ): InstanceType<typeof PromiseCopy> | undefined {
 
         if( !( this instanceof PromiseCopy ) )return new PromiseCopy( ( _, rej ) => rej( value ) );
+
+        if( this.#state !== State.pending )return ; //return if promise settled.
         
         this.#state = State.rejected ;
         this.#result = value ;

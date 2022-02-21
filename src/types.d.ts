@@ -1,4 +1,4 @@
-import type { PromiseCopy } from './index' ;
+import type { PromiseCopy } from './main' ;
 
 export type Executor = ( 
         resolve : typeof PromiseCopy[ 'resolve' ], 
