@@ -26,7 +26,7 @@ class PromiseCopy{
 
     #handlers : SettleHandler[] = []
 
-    #timeoutId: number | null = null ;
+    #queued: boolean = false;
 
     //access value in instance:
     fulfilled?: unknown
@@ -50,21 +50,23 @@ class PromiseCopy{
     }
 
     #dispatchCallbacks(){
-
         if( this.#state === State.pending )return ;
-        if( this.#timeoutId !== null )return ;
+        if( this.#queued )return ;
 
         const method = this.#state === State.fulfilled ? 'success' : 'fail' ;
 
-        this.#timeoutId = setTimeout( () => {
-            if( this.#state === State.rejected && !this.#handlers.length )return console.error( 'Uncaught (in promisecopy)', this.#result );
-            this.#handlers.forEach( handler => {
-                 handler[ method ]( this.#result );
-            } );
+        queueMicrotask( () => {
+            if( this.#state === State.rejected && !this.#handlers.length ) console.error( 'Uncaught (in promisecopy)', this.#result );
+            
+            for( let handler of this.#handlers ){
+                handler[ method ]( this.#result ) ;
+            }
             //cleanup:
             this.#handlers = [];
-            this.#timeoutId = null ;
-        } )
+            this.#queued = false ;
+            
+        } );
+        this.#queued = true ;
 
     }
 
@@ -142,13 +144,13 @@ class PromiseCopy{
     finally( callback?: RemoveArgs< GenericCB > ){
         const successCB = ( value:unknown ) => {
             const response = callback?.() ;     
-            return ( response instanceof PromiseCopy ) ? response.then( _ => value ) : value ;
+            return ( isThenable( response ) ) ? response.then( _ => value ) : value ;
         } 
 
         const errorCB = ( error: unknown ) => {
                const response = callback?.() ;
                const errorPromise = () => PromiseCopy.reject( error ); 
-               return ( response instanceof PromiseCopy ) ? response.then( _ => errorPromise() ) : errorPromise() ; 
+               return ( isThenable( response ) ) ? response.then( _ => errorPromise() ) : errorPromise() ; 
         }
 
         return this.then( successCB, errorCB );

@@ -9,7 +9,7 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
     return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var _PromiseCopy_instances, _PromiseCopy_state, _PromiseCopy_result, _PromiseCopy_handlers, _PromiseCopy_timeoutId, _PromiseCopy_dispatchCallbacks;
+var _PromiseCopy_instances, _PromiseCopy_state, _PromiseCopy_result, _PromiseCopy_handlers, _PromiseCopy_queued, _PromiseCopy_dispatchCallbacks;
 import { isThenable } from './utils.js';
 var State;
 (function (State) {
@@ -23,7 +23,7 @@ class PromiseCopy {
         _PromiseCopy_state.set(this, State.pending);
         _PromiseCopy_result.set(this, undefined);
         _PromiseCopy_handlers.set(this, []);
-        _PromiseCopy_timeoutId.set(this, null);
+        _PromiseCopy_queued.set(this, false);
         try {
             executer(PromiseCopy.resolve.bind(this), PromiseCopy.reject.bind(this));
         }
@@ -92,31 +92,32 @@ class PromiseCopy {
     finally(callback) {
         const successCB = (value) => {
             const response = callback?.();
-            return (response instanceof PromiseCopy) ? response.then(_ => value) : value;
+            return (isThenable(response)) ? response.then(_ => value) : value;
         };
         const errorCB = (error) => {
             const response = callback?.();
             const errorPromise = () => PromiseCopy.reject(error);
-            return (response instanceof PromiseCopy) ? response.then(_ => errorPromise()) : errorPromise();
+            return (isThenable(response)) ? response.then(_ => errorPromise()) : errorPromise();
         };
         return this.then(successCB, errorCB);
     }
 }
-_PromiseCopy_state = new WeakMap(), _PromiseCopy_result = new WeakMap(), _PromiseCopy_handlers = new WeakMap(), _PromiseCopy_timeoutId = new WeakMap(), _PromiseCopy_instances = new WeakSet(), _PromiseCopy_dispatchCallbacks = function _PromiseCopy_dispatchCallbacks() {
+_PromiseCopy_state = new WeakMap(), _PromiseCopy_result = new WeakMap(), _PromiseCopy_handlers = new WeakMap(), _PromiseCopy_queued = new WeakMap(), _PromiseCopy_instances = new WeakSet(), _PromiseCopy_dispatchCallbacks = function _PromiseCopy_dispatchCallbacks() {
     if (__classPrivateFieldGet(this, _PromiseCopy_state, "f") === State.pending)
         return;
-    if (__classPrivateFieldGet(this, _PromiseCopy_timeoutId, "f") !== null)
+    if (__classPrivateFieldGet(this, _PromiseCopy_queued, "f"))
         return;
     const method = __classPrivateFieldGet(this, _PromiseCopy_state, "f") === State.fulfilled ? 'success' : 'fail';
-    __classPrivateFieldSet(this, _PromiseCopy_timeoutId, setTimeout(() => {
+    queueMicrotask(() => {
         if (__classPrivateFieldGet(this, _PromiseCopy_state, "f") === State.rejected && !__classPrivateFieldGet(this, _PromiseCopy_handlers, "f").length)
-            return console.error('Uncaught (in promisecopy)', __classPrivateFieldGet(this, _PromiseCopy_result, "f"));
-        __classPrivateFieldGet(this, _PromiseCopy_handlers, "f").forEach(handler => {
+            console.error('Uncaught (in promisecopy)', __classPrivateFieldGet(this, _PromiseCopy_result, "f"));
+        for (let handler of __classPrivateFieldGet(this, _PromiseCopy_handlers, "f")) {
             handler[method](__classPrivateFieldGet(this, _PromiseCopy_result, "f"));
-        });
+        }
         __classPrivateFieldSet(this, _PromiseCopy_handlers, [], "f");
-        __classPrivateFieldSet(this, _PromiseCopy_timeoutId, null, "f");
-    }), "f");
+        __classPrivateFieldSet(this, _PromiseCopy_queued, false, "f");
+    });
+    __classPrivateFieldSet(this, _PromiseCopy_queued, true, "f");
 };
 window.PromiseCopy = PromiseCopy;
 //# sourceMappingURL=main.js.map
