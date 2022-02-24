@@ -158,4 +158,8 @@ class PromiseCopy{
 
 }
 
-(window as any).PromiseCopy = PromiseCopy ;
+declare global{
+    interface Window{ PromiseCopy: typeof PromiseCopy }
+}
+
+window.PromiseCopy = PromiseCopy ;
