@@ -1,14 +1,14 @@
 {
-  "name": "promise",
+  "name": "promise-copy",
   "version": "1.0.0",
-  "description": "",
+  "description": "A Promise implementation for deeper understanding.",
   "main": "index.js",
   "scripts": {
     "start": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [ "promise", "es-6" ],
+  "author": "ashwinkumar2438@gmail.com",
   "license": "ISC",
   "dependencies": {
     "typescript": "^4.5.5"
