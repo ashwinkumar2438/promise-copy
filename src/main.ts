@@ -142,18 +142,12 @@ class PromiseCopy{
 
 
     finally( callback?: RemoveArgs< GenericCB > ){
-        const successCB = ( value:unknown ) => {
-            const response = callback?.() ;     
-            return ( isThenable( response ) ) ? response.then( _ => value ) : value ;
-        } 
-
-        const errorCB = ( error: unknown ) => {
-               const response = callback?.() ;
-               const errorPromise = () => PromiseCopy.reject( error ); 
-               return ( isThenable( response ) ) ? response.then( _ => errorPromise() ) : errorPromise() ; 
+        const commonCB = ( getPromise: typeof PromiseCopy.resolve | typeof PromiseCopy.reject ) => ( value : unknown )=> {
+            const response = callback?.();
+            return PromiseCopy.resolve( response )?.then( _ => getPromise( value ) );
         }
 
-        return this.then( successCB, errorCB );
+        return this.then( commonCB( PromiseCopy.resolve ), commonCB( PromiseCopy.reject ) );
     }
 
 }

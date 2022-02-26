@@ -90,16 +90,11 @@ class PromiseCopy {
         return this.then(undefined, failCB);
     }
     finally(callback) {
-        const successCB = (value) => {
+        const commonCB = (getPromise) => (value) => {
             const response = callback?.();
-            return (isThenable(response)) ? response.then(_ => value) : value;
+            return PromiseCopy.resolve(response)?.then(_ => getPromise(value));
         };
-        const errorCB = (error) => {
-            const response = callback?.();
-            const errorPromise = () => PromiseCopy.reject(error);
-            return (isThenable(response)) ? response.then(_ => errorPromise()) : errorPromise();
-        };
-        return this.then(successCB, errorCB);
+        return this.then(commonCB(PromiseCopy.resolve), commonCB(PromiseCopy.reject));
     }
 }
 _PromiseCopy_state = new WeakMap(), _PromiseCopy_result = new WeakMap(), _PromiseCopy_handlers = new WeakMap(), _PromiseCopy_queued = new WeakMap(), _PromiseCopy_instances = new WeakSet(), _PromiseCopy_dispatchCallbacks = function _PromiseCopy_dispatchCallbacks() {
